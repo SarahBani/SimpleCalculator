@@ -1,0 +1,7 @@
+<Project>
+ <PropertyGroup>
+	<Deterministic>true</Deterministic>
+	<IgnoreVersionUpdate>true</IgnoreVersionUpdate>
+	<FileVersion>1.0.0</FileVersion>  
+ </PropertyGroup>
+</Project>

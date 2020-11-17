@@ -1,0 +1,153 @@
+﻿@inject NavigationManager Navigator
+@page "/"
+
+<h5><span class="oi oi-grid-three-up"></span> Calculator</h5>
+<br />
+
+<div class="container">
+
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <b>Please enter a number:</b>
+            <br />
+            <input type="number" @bind-value="newItem" placeholder="Enter a number" />
+            <button type="button" class="btn btn-dark oi oi-plus" @onclick="InsertNumber"></button>
+            <hr />
+
+            <div class="col-12">
+                @foreach (decimal item in numbers)
+                {
+                    <section class="row">
+                        <div class="col-6 col-md-3 text-right p-1">
+                            <span>@item</span>
+                        </div>
+                        <div class="col-1 text-left p-1">
+                            <button type="button" class="btn btn-danger oi oi-x" @onclick="() => RemoveNumber(item)"></button>
+                        </div>
+                    </section>
+                }
+            </div>
+            <hr class="d-block d-md-none" />
+        </div>
+
+        <div class="col-12 col-md-6">
+            <strong>Operations</strong>
+            <br />
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary oi oi-plus" @onclick="() => RunOperation(Operation.Add)"></button>
+                <button type="button" class="btn btn-warning oi oi-minus" @onclick="() => RunOperation(Operation.Subtract)"></button>
+                <button type="button" class="btn btn-success oi oi-x" @onclick="() => RunOperation(Operation.Multiply)"></button>
+                <button type="button" class="btn btn-danger fas fa-divide" @onclick="() => RunOperation(Operation.Divide)"></button>
+            </div>
+            <hr />
+
+            <div class="row">
+                <div class="col-12">
+                    <strong>Result</strong>
+                    <br />
+
+                    <p id="result" class="@outputClass">
+                        @output
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Spinner -->
+<div class="spinner text-center @(isLoading ? "d-block" : " d-none")">
+    <div class="spinner-border text-info" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+
+@code {
+
+    private enum Operation
+    {
+        Add,
+        Subtract,
+        Multiply,
+        Divide
+    }
+
+    private decimal newItem = 0;
+    private IList<decimal> numbers = new List<decimal>();
+    private string output = "---";
+    private bool isLoading = false;
+    private int _loaderCounter = 0;
+    private string outputClass = string.Empty;
+    private const string _baseUrl = "api/calculation";
+    private const string _successClass = "success";
+    private const string _errorClass = "error";
+
+    private void InsertNumber()
+    {
+        this.numbers.Add(newItem);
+        this.newItem = 0;
+    }
+
+    private void RemoveNumber(decimal item) =>
+        this.numbers.Remove(item);
+
+    private void RunOperation(Operation operation)
+    {
+        this.isLoading = true;
+        InvokeAsync(() => RunApi(operation));
+    }
+
+    private async Task RunApi(Operation operation)
+    {
+        try
+        {
+            string url = $"{_baseUrl}/{operation.ToString().ToLower()}";
+            HttpResponseMessage response = await Helper.GetClient(Navigator.BaseUri)
+                .PostAsJsonAsync(url, numbers.ToArray());
+            this.output = await response.Content.ReadAsStringAsync(); // Deserialize the content in the response body.
+
+            switch (response.StatusCode)
+            {
+                case System.Net.HttpStatusCode.OK:
+                    this.outputClass = _successClass;
+                    break;
+                case System.Net.HttpStatusCode.BadRequest:
+                    this.outputClass = _errorClass;
+                    break;
+                default:
+                    break;
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+        finally
+        {
+            this.isLoading = false;
+            base.StateHasChanged();
+        }
+    }
+
+    private void showLoader()
+    {
+        this.isLoading = true;
+        this._loaderCounter++;
+    }
+
+    private void hideLoader()
+    {
+        if (this._loaderCounter > 0)
+        {
+            this._loaderCounter--;
+        }
+        if (this._loaderCounter == 0)
+        {
+            this.isLoading = false;
+        }
+    }
+
+}
