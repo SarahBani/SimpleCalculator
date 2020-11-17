@@ -11,7 +11,7 @@ namespace Build
 
         #region Properties
 
-        private const string _solutionName = "ProductMadness";
+        private const string _solutionName = "SimpleCalculator";
         private const string _buildProjectName = "Build";
         private const string _webAPIProjectName = "WebAPI";
         private const string _unitTestProjectName = "UnitTest";
